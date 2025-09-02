@@ -25,11 +25,12 @@
 
 import { ipcRenderer, contextBridge } from 'electron'
 
-contextBridge.exposeInMainWorld('ipcRenderer', {
+contextBridge.exposeInMainWorld('bridge', {
   log: (message: string) => ipcRenderer.send('renderer-log', message),
   onMessage: (callback: (msg: any) => void) => {
     ipcRenderer.on('main-process-message', (_, data) => callback(data))
   },
-  start: (arg: string) => ipcRenderer.send('start-proxy', arg)
+  start: (arg: string) => ipcRenderer.send('start-proxy', arg),
+  stop: () => ipcRenderer.send('stop-proxy'),
 })
 

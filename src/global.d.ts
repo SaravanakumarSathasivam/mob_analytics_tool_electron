@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
   interface Window {
+    bridge: {
+      start: (arg: string) => void;
+      stop: () => void;
+    };
     ipcRenderer: {
       on: (channel: string, listener: (...args: any[]) => void) => void;
       off: (channel: string, listener: (...args: any[]) => void) => void;

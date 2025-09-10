@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useMemo, useState } from "react";
+import { SetStateAction, useEffect, useMemo, useState } from "react";
 import type { DebugEvent } from "./types";
 declare global {
   interface Window {
@@ -10,6 +10,19 @@ declare global {
 export default function App() {
   const [events, setEvents] = useState<DebugEvent[]>([]);
   const [query, setQuery] = useState("");
+  const [localIP, setLocalIP] = useState("");
+
+  useEffect(() => {
+    window.bridge.onProxyStatus(
+      (status: { running: any; ip: SetStateAction<string> }) => {
+        if (status.running) {
+          setLocalIP(status.ip);
+        } else {
+          setLocalIP("");
+        }
+      }
+    );
+  }, []);
 
   useEffect(() => {
     if (window.ipcRenderer?.on) {
@@ -33,7 +46,7 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen p-4 bg-gray-950 text-gray-100">
-      <div className="flex gap-2 mb-4 text-black">
+      <div className="flex gap-2 mb-4">
         <button
           onClick={() => window.bridge.start("proxy")}
           className="px-3 py-2 rounded bg-blue-600 hover:bg-blue-500"
@@ -46,35 +59,21 @@ export default function App() {
         >
           Stop Proxy
         </button>
-        <button
-          onClick={() => window.bridge.start("android")}
-          className="px-3 py-2 rounded bg-green-600 hover:bg-green-500"
-        >
-          Start Android
-        </button>
-        <button
-          onClick={() => window.bridge.stop("android")}
-          className="px-3 py-2 rounded bg-gray-700"
-        >
-          Stop Android
-        </button>
-        <button
-          onClick={() => window.bridge.start("ios")}
-          className="px-3 py-2 rounded bg-purple-600 hover:bg-purple-500"
-        >
-          Start iOS (macOS)
-        </button>
-        <button
-          onClick={() => window.bridge.stop("ios")}
-          className="px-3 py-2 rounded bg-gray-700"
-        >
-          Stop iOS
-        </button>
+        {localIP && (
+          <div className="d-flex mx-auto my-auto text-sm text-gray-400 font-bold">
+            Local Proxy Address:{" "}
+            <span className="text-green-400">{localIP}:8081</span>
+          </div>
+        )}
+        {/* <button onClick={()=>window.bridge.start('android')} className="px-3 py-2 rounded bg-green-600 hover:bg-green-500">Start Android</button>
+        <button onClick={()=>window.bridge.stop('android')} className="px-3 py-2 rounded bg-gray-700">Stop Android</button>
+        <button onClick={()=>window.bridge.start('ios')} className="px-3 py-2 rounded bg-purple-600 hover:bg-purple-500">Start iOS (macOS)</button>
+        <button onClick={()=>window.bridge.stop('ios')} className="px-3 py-2 rounded bg-gray-700">Stop iOS</button> */}
         <input
           placeholder="Search events..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="ml-auto px-3 py-2 rounded bg-gray-800 outline-none w-72 text-gray-100"
+          className="ml-auto px-3 py-2 rounded bg-gray-800 outline-none w-72"
         />
       </div>
       <div className="border border-gray-800 rounded overflow-hidden">

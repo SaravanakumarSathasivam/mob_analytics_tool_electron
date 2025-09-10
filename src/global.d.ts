@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+export {};
+
 declare global {
   interface Window {
-    ipcRenderer: {
-      on: (channel: string, listener: (...args: any[]) => void) => void;
-      off: (channel: string, listener: (...args: any[]) => void) => void;
-      send: (channel: string, ...args: any[]) => void;
-      invoke: (channel: string, ...args: any[]) => Promise<any>;
+    bridge: {
+      start: (target: string) => void;
+      stop: (target: string) => void;
+      onEvent: (callback: (event: any) => void) => void;
     };
   }
 }
-export {};

@@ -1,35 +1,11 @@
-// import { ipcRenderer, contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from "electron";
 
-// // --------- Expose some API to the Renderer process ---------
-// contextBridge.exposeInMainWorld('ipcRenderer', {
-//   on(...args: Parameters<typeof ipcRenderer.on>) {
-//     const [channel, listener] = args
-//     return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
-//   },
-//   off(...args: Parameters<typeof ipcRenderer.off>) {
-//     const [channel, ...omit] = args
-//     return ipcRenderer.off(channel, ...omit)
-//   },
-//   send(...args: Parameters<typeof ipcRenderer.send>) {
-//     const [channel, ...omit] = args
-//     return ipcRenderer.send(channel, ...omit)
-//   },
-//   invoke(...args: Parameters<typeof ipcRenderer.invoke>) {
-//     const [channel, ...omit] = args
-//     return ipcRenderer.invoke(channel, ...omit)
-//   },
-
-//   // You can expose other APTs you need here.
-//   // ...
-// })
-
-import { ipcRenderer, contextBridge } from 'electron'
-
-contextBridge.exposeInMainWorld('ipcRenderer', {
-  log: (message: string) => ipcRenderer.send('renderer-log', message),
-  onMessage: (callback: (msg: any) => void) => {
-    ipcRenderer.on('main-process-message', (_, data) => callback(data))
-  },
-  start: (arg: string) => ipcRenderer.send('start-proxy', arg)
-})
-
+contextBridge.exposeInMainWorld("bridge", {
+  start: (target: string) => ipcRenderer.send("start", target),
+  stop: (target: string) => ipcRenderer.send("stop", target),
+  getLocalIP: () => ipcRenderer.invoke("get-local-ip"),
+  onProxyStatus: (callback: (arg0: any) => void) =>
+    ipcRenderer.on("proxy-status", (_, status) => callback(status)),
+  onEvent: (callback: (event: any) => void) =>
+    ipcRenderer.on("event", (_e, data) => callback(data)),
+});

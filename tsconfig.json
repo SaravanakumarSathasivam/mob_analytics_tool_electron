@@ -20,6 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "electron", "mitmproxy", "vite.config.ts"],
+  "include": ["src", "electron", "mitmproxy"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -1,15 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ParsedEvent, parseQueryParams, parseBodyParams, normalizeHeaders, createParsedEvent } from "./common";
+import {
+  ParsedEvent,
+  parseQueryParams,
+  parseBodyParams,
+  normalizeHeaders,
+  createParsedEvent,
+} from "./common";
 
 /**
  * Detects if a request belongs to Google Analytics or Firebase.
  */
 export function isGoogleRequest(url: string): boolean {
+  if (!url) return false;
   return (
-    url.includes("www.google-analytics.com/collect") || // GA3
-    url.includes("www.google-analytics.com/g/collect") || // GA4
-    url.includes("firebase") // Firebase SDK requests
-  );
+    url.includes("google-analytics.com") ||
+    url.includes("analytics.google.com") ||
+    url.includes("/collect") || // GA Measurement Protocol
+    url.includes("gtag/js")
+  ); // GA4
 }
 
 /**

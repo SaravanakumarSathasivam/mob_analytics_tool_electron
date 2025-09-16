@@ -1,12 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ParsedEvent, parseQueryParams, parseBodyParams, normalizeHeaders, createParsedEvent } from "./common";
+import {
+  ParsedEvent,
+  parseQueryParams,
+  parseBodyParams,
+  normalizeHeaders,
+  createParsedEvent,
+} from "./common";
 
 /**
  * Detects if a request belongs to Adobe Analytics.
  * Typical pattern: /b/ss/{rsid}/...
  */
 export function isAdobeRequest(url: string): boolean {
-  return url.includes("/b/ss/");
+  if (!url) return false;
+  return (
+    url.includes("omtrdc.net") ||
+    url.includes("adobedc.net") ||
+    url.includes("sc.omtrdc.net") ||
+    url.includes("/b/ss/")
+  ); // Classic Adobe Analytics endpoint
 }
 
 /**
@@ -20,8 +32,11 @@ export function parseAdobeRequest(request: any): ParsedEvent | null {
   const headers = normalizeHeaders(request.headers);
 
   // Adobe event names often stored in 'pev2', 'pe', or 'pageName'
-  const eventName = queryParams.pev2 || queryParams.pe || queryParams.pageName || "adobe_event";
+  const eventName =
+    queryParams.pev2 || queryParams.pe || queryParams.pageName || "adobe_event";
   const payload = { ...queryParams, ...bodyParams };
+
+  console.log(eventName, bodyParams, request, 'adobee')
 
   return createParsedEvent(
     "adobe_analytics",

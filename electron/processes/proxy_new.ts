@@ -25,12 +25,9 @@ async function sendToRenderer(
   try {
     // prefer mainWindow if passed, else broadcast to all windows
     if (mainWindow && !mainWindow.isDestroyed()) {
-      console.log(2323);
-
       mainWindow.webContents.send(channel, payload);
     } else {
       // fallback: broadcast to all windows
-      console.log(4454);
 
       const { BrowserWindow } = await import("electron");
       BrowserWindow.getAllWindows().forEach((w) =>
@@ -123,14 +120,16 @@ export async function startProxy(
 
       if (obj) {
         // If your mitm_script prints a structured object: parse adapters (google/adobe)
-        event = parseGoogleRequest(obj) ||
-          parseAdobeRequest(obj) || {
-            ts: obj.ts || Date.now(),
+        event = parseGoogleRequest(obj) || parseAdobeRequest(obj);
+        if (!event) {
+          event = {
+            ts: obj.timestamp || Date.now(),
             source: "mitm",
             requestUrl: obj.url || obj.request || "",
             method: obj.method || "",
-            payload: obj,
+            payload: obj.body,
           };
+        }
       } else {
         // fallback: try to parse common "METHOD URL STATUS" text lines or treat as raw
         const match = trimmed.match(
@@ -182,9 +181,9 @@ export async function startProxy(
         );
       }
 
+      console.log(event, 'eve')
       // push into batch and schedule flush
       batch.push(event);
-      console.log(batch.length)
       if (batch.length <= 200) {
         // immediate flush if large
         sendToRenderer("proxy-event", batch, window);
@@ -193,13 +192,12 @@ export async function startProxy(
           clearTimeout(batchTimer);
           batchTimer = null;
         }
-      } 
-      else {
+      } else {
         scheduleBatchFlush();
       }
     }
   });
-  
+
   mitmProcess.stderr.on("data", (d) =>
     console.error("[mitm stderr]", d.toString())
   );

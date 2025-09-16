@@ -7,12 +7,13 @@ import {
   ReactNode,
   ReactPortal,
   useEffect,
+  useMemo,
   // useMemo,
   useState,
 } from "react";
 // import type { DebugEvent } from "./types";
-import { QRCodeSVG } from "qrcode.react";
-import SetupGuideModal from "./components/SetupGuideModal";
+import SetupGuideModal from "@components/SetupGuideModal";
+import { isAnalyticsEvent } from "@helpers/helper";
 
 declare global {
   interface Window {
@@ -28,8 +29,8 @@ export default function App() {
   const [localIP, setLocalIP] = useState("");
   const [logs, setLogs] = useState<any>([]);
   const [status, setStatus] = useState<ProxyStatus>("stopped");
-  const [showQR, setShowQR] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [analyticsOnly, setShowAnalyticsOnly] = useState(true);
 
   // useEffect(() => {
   //   window.bridge.onProxyStatus(
@@ -73,7 +74,7 @@ export default function App() {
       });
 
       // debug
-      console.log("Received", normalized.length, "events");
+      console.log("Received", normalized.length, "events", normalized);
     };
 
     // subscribe
@@ -91,6 +92,13 @@ export default function App() {
       }
     };
   }, []);
+
+  const filteredLogs = analyticsOnly
+    ? logs.filter(
+        (log: { source: string }) =>
+          log.source === "google_analytics" || log.source === "adobe_analytics"
+      )
+    : logs;
 
   useEffect(() => {
     (async () => {
@@ -130,8 +138,6 @@ export default function App() {
   //   );
   // }, [events, query]);
 
-  console.log(logs, "logs");
-
   return (
     <div className="flex flex-col h-screen w-screen">
       <div className="sticky top-0 z-10 shadow p-2 bg-gray-900 flex items-center justify-between w-full">
@@ -170,7 +176,7 @@ export default function App() {
 
           {localIP && status === "running" && (
             <div className="ml-4 text-sm text-gray-400 font-bold">
-              Use this proxy in device Wi-Fi:{" "}
+              Proxy Address:{" "}
               <span className="text-green-400">{localIP}:8081</span>
             </div>
           )}
@@ -186,18 +192,25 @@ export default function App() {
         {/* RIGHT SECTION */}
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setShowAnalyticsOnly((prev) => !prev)}
+            className="px-3 py-1 rounded bg-gray-300 text-white"
+          >
+            {analyticsOnly ? "All logs" : "Analytics logs"}
+          </button>
+
+          <button
             onClick={() => setLogs([])}
-            className="px-3 py-2 rounded bg-gray-500 text-white"
+            className="px-3 py-2 rounded bg-gray-300 text-white"
           >
             Clear Logs
           </button>
           <div className="ml-auto">
-          <input
-            placeholder="Search events..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="px-3 py-2 rounded bg-gray-800 outline-none w-72"
-          />
+            <input
+              placeholder="Search events..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="px-3 py-2 rounded bg-gray-800 outline-none w-72"
+            />
           </div>
         </div>
       </div>
@@ -214,7 +227,7 @@ export default function App() {
             </tr>
           </thead>
           <tbody>
-            {logs.map(
+            {filteredLogs.map(
               (
                 e: {
                   ts: string | number | Date;

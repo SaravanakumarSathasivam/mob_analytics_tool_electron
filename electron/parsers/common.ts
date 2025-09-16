@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-escape */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // parsers/common.ts
 
@@ -16,11 +17,19 @@ export interface ParsedEvent {
  * Parse a query string or request body into an object
  */
 export function parseKeyValueString(data: string): Record<string, any> {
-  const params = new URLSearchParams(data);
+  const cleaned = data
+    .replace(/c\.\&a\.\&/g, "")   // remove "c.&a.&"
+    .replace(/\.c\&/g, "&")       // replace ".c&" with "&"
+    .replace(/\.a\&/g, "&");      // replace ".a&" with "&"
+
+  // Step 2: Parse like normal query params
+  const params = new URLSearchParams(cleaned);
   const obj: Record<string, any> = {};
+console.log(params, 'paras')
   params.forEach((value, key) => {
     obj[key] = value;
   });
+console.log(obj, '3434343434')
   return obj;
 }
 

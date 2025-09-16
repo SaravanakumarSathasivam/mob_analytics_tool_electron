@@ -58,11 +58,14 @@ async function resolveMitmScriptFilename(allowPrompt = true) {
   return null;
 }
 function parseKeyValueString(data) {
-  const params = new URLSearchParams(data);
+  const cleaned = data.replace(/c\.\&a\.\&/g, "").replace(/\.c\&/g, "&").replace(/\.a\&/g, "&");
+  const params = new URLSearchParams(cleaned);
   const obj = {};
+  console.log(params, "paras");
   params.forEach((value, key) => {
     obj[key] = value;
   });
+  console.log(obj, "3434343434");
   return obj;
 }
 function parseQueryParams(url) {
@@ -103,9 +106,9 @@ function createParsedEvent(source, type, payload, method, requestUrl, headers, s
   };
 }
 function isGoogleRequest(url) {
-  return url.includes("www.google-analytics.com/collect") || // GA3
-  url.includes("www.google-analytics.com/g/collect") || // GA4
-  url.includes("firebase");
+  if (!url) return false;
+  return url.includes("google-analytics.com") || url.includes("analytics.google.com") || url.includes("/collect") || // GA Measurement Protocol
+  url.includes("gtag/js");
 }
 function parseGoogleRequest(request) {
   if (!isGoogleRequest(request.url)) return null;
@@ -125,7 +128,8 @@ function parseGoogleRequest(request) {
   );
 }
 function isAdobeRequest(url) {
-  return url.includes("/b/ss/");
+  if (!url) return false;
+  return url.includes("omtrdc.net") || url.includes("adobedc.net") || url.includes("sc.omtrdc.net") || url.includes("/b/ss/");
 }
 function parseAdobeRequest(request) {
   if (!isAdobeRequest(request.url)) return null;
@@ -134,6 +138,7 @@ function parseAdobeRequest(request) {
   const headers = normalizeHeaders(request.headers);
   const eventName = queryParams.pev2 || queryParams.pe || queryParams.pageName || "adobe_event";
   const payload = { ...queryParams, ...bodyParams };
+  console.log(eventName, bodyParams, request, "adobee");
   return createParsedEvent(
     "adobe_analytics",
     eventName,
@@ -154,10 +159,8 @@ const BATCH_MS = 150;
 async function sendToRenderer(channel, payload, mainWindow) {
   try {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      console.log(2323);
       mainWindow.webContents.send(channel, payload);
     } else {
-      console.log(4454);
       const { BrowserWindow: BrowserWindow2 } = await import("electron");
       BrowserWindow2.getAllWindows().forEach(
         (w) => w.webContents.send(channel, payload)
@@ -215,13 +218,16 @@ async function startProxy(window, opts) {
       }
       let event = null;
       if (obj) {
-        event = parseGoogleRequest(obj) || parseAdobeRequest(obj) || {
-          ts: obj.ts || Date.now(),
-          source: "mitm",
-          requestUrl: obj.url || obj.request || "",
-          method: obj.method || "",
-          payload: obj
-        };
+        event = parseGoogleRequest(obj) || parseAdobeRequest(obj);
+        if (!event) {
+          event = {
+            ts: obj.timestamp || Date.now(),
+            source: "mitm",
+            requestUrl: obj.url || obj.request || "",
+            method: obj.method || "",
+            payload: obj.body
+          };
+        }
       } else {
         const match = trimmed.match(
           /(GET|POST|PUT|DELETE|PATCH)\s+(https?:\/\/\S+)\s+(\d{2,3})?/i
@@ -266,8 +272,8 @@ async function startProxy(window, opts) {
           window
         );
       }
+      console.log(event, "eve");
       batch.push(event);
-      console.log(batch.length);
       if (batch.length <= 200) {
         sendToRenderer("proxy-event", batch, window);
         batch = [];

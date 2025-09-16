@@ -29,6 +29,13 @@ export default defineConfig({
           : {},
     }),
   ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"), // frontend src/
+      "@components": path.resolve(__dirname, "./src/components"),
+      "@helpers": path.resolve(__dirname, "./src/helpers"),
+    },
+  },
   build: {
     sourcemap: true,
   },

@@ -28,15 +28,18 @@ export function parseAdobeRequest(request: any): ParsedEvent | null {
   if (!isAdobeRequest(request.url)) return null;
 
   const queryParams = parseQueryParams(request.url);
-  const bodyParams = parseBodyParams(request.body);
+  const contentType =
+    request.headers?.["Content-Type"] || request.headers?.["content-type"];
+
+  // Pass contentType to body parser
+  const bodyParams = parseBodyParams(request.body, contentType);
+
   const headers = normalizeHeaders(request.headers);
 
   // Adobe event names often stored in 'pev2', 'pe', or 'pageName'
   const eventName =
     queryParams.pev2 || queryParams.pe || queryParams.pageName || "adobe_event";
   const payload = { ...queryParams, ...bodyParams };
-
-  console.log(eventName, bodyParams, request, 'adobee')
 
   return createParsedEvent(
     "adobe_analytics",

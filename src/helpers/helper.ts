@@ -22,3 +22,7 @@ export const isAnalyticsEvent = (event: any) => {
 
   return false;
 };
+
+export function uniqueUnixTimestamp(iso: string): number {
+  return new Date(iso).getTime();
+}

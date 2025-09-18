@@ -7,13 +7,12 @@ import {
   ReactNode,
   ReactPortal,
   useEffect,
-  useMemo,
   // useMemo,
   useState,
 } from "react";
 // import type { DebugEvent } from "./types";
 import SetupGuideModal from "@components/SetupGuideModal";
-import { isAnalyticsEvent } from "@helpers/helper";
+// import { isAnalyticsEvent } from "@helpers/helper";
 
 declare global {
   interface Window {
@@ -138,6 +137,8 @@ export default function App() {
   //   );
   // }, [events, query]);
 
+  console.log(filteredLogs, "filtered");
+
   return (
     <div className="flex flex-col h-screen w-screen">
       <div className="sticky top-0 z-10 shadow p-2 bg-gray-900 flex items-center justify-between w-full">
@@ -230,6 +231,7 @@ export default function App() {
             {filteredLogs.map(
               (
                 e: {
+                  timestamp: string | number | Date;
                   ts: string | number | Date;
                   source:
                     | string
@@ -256,7 +258,15 @@ export default function App() {
                 i: Key | null | undefined
               ) => (
                 <tr key={i} className="odd:bg-gray-900/40">
-                  <td className="p-2">{new Date(e.ts).toLocaleTimeString()}</td>
+                  {!analyticsOnly ? (
+                    <td className="p-2">
+                      {new Date(e.ts).toLocaleTimeString()}
+                    </td>
+                  ) : (
+                    <td className="p-2">
+                      {new Date(e.timestamp).toLocaleTimeString()}
+                    </td>
+                  )}
                   <td className="p-2">{e.source}</td>
                   {/* <td className="p-2">
                     {(e.host || "") + (e.path ? ` ${e.path}` : "")}

@@ -61,11 +61,11 @@ function parseKeyValueString(data) {
   const cleaned = data.replace(/c\.\&a\.\&/g, "").replace(/\.c\&/g, "&").replace(/\.a\&/g, "&");
   const params = new URLSearchParams(cleaned);
   const obj = {};
-  console.log(params, "paras");
   params.forEach((value, key) => {
-    obj[key] = value;
+    const decodedKey = decodeURIComponent(key);
+    const decodedValue = decodeURIComponent(value);
+    obj[decodedKey] = decodedValue;
   });
-  console.log(obj, "3434343434");
   return obj;
 }
 function parseQueryParams(url) {
@@ -79,8 +79,12 @@ function parseQueryParams(url) {
 function parseBodyParams(body, contentType) {
   if (!body) return {};
   try {
-    if (contentType == null ? void 0 : contentType.includes("application/json")) ;
-    if (contentType == null ? void 0 : contentType.includes("application/x-www-form-urlencoded")) ;
+    if (contentType == null ? void 0 : contentType.includes("application/json")) {
+      return JSON.parse(body);
+    }
+    if (contentType == null ? void 0 : contentType.includes("application/x-www-form-urlencoded")) {
+      return parseKeyValueString(body);
+    }
   } catch {
     return {};
   }
@@ -111,9 +115,10 @@ function isGoogleRequest(url) {
   url.includes("gtag/js");
 }
 function parseGoogleRequest(request) {
+  var _a;
   if (!isGoogleRequest(request.url)) return null;
   const queryParams = parseQueryParams(request.url);
-  const bodyParams = parseBodyParams(request.body);
+  const bodyParams = typeof request.body === "string" ? parseBodyParams(request.body, (_a = request.headers) == null ? void 0 : _a["content-type"]) : request.body || {};
   const headers = normalizeHeaders(request.headers);
   const eventName = queryParams.en || queryParams.t || "google_event";
   const payload = { ...queryParams, ...bodyParams };
@@ -132,13 +137,14 @@ function isAdobeRequest(url) {
   return url.includes("omtrdc.net") || url.includes("adobedc.net") || url.includes("sc.omtrdc.net") || url.includes("/b/ss/");
 }
 function parseAdobeRequest(request) {
+  var _a, _b;
   if (!isAdobeRequest(request.url)) return null;
   const queryParams = parseQueryParams(request.url);
-  const bodyParams = parseBodyParams(request.body);
+  const contentType = ((_a = request.headers) == null ? void 0 : _a["Content-Type"]) || ((_b = request.headers) == null ? void 0 : _b["content-type"]);
+  const bodyParams = parseBodyParams(request.body, contentType);
   const headers = normalizeHeaders(request.headers);
   const eventName = queryParams.pev2 || queryParams.pe || queryParams.pageName || "adobe_event";
   const payload = { ...queryParams, ...bodyParams };
-  console.log(eventName, bodyParams, request, "adobee");
   return createParsedEvent(
     "adobe_analytics",
     eventName,

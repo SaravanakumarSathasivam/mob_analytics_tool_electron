@@ -27,7 +27,10 @@ export function parseGoogleRequest(request: any): ParsedEvent | null {
   if (!isGoogleRequest(request.url)) return null;
 
   const queryParams = parseQueryParams(request.url);
-  const bodyParams = parseBodyParams(request.body);
+  const bodyParams =
+    typeof request.body === "string"
+      ? parseBodyParams(request.body, request.headers?.["content-type"])
+      : request.body || {};
   const headers = normalizeHeaders(request.headers);
 
   const eventName = queryParams.en || queryParams.t || "google_event";
